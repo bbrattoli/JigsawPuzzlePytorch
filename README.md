@@ -1,7 +1,8 @@
 # JigsawPuzzlePytorch
-Pytorch implementation of the paper ["Unsupervised Learning of Visual Representations by Solving Jigsaw Puzzles"](https://arxiv.org/abs/1603.09246) [Caffe Implementation](https://github.com/MehdiNoroozi/JigsawPuzzleSolver) by Mehdi Noroozi
+Pytorch implementation of the paper ["Unsupervised Learning of Visual Representations by Solving Jigsaw Puzzles"](https://arxiv.org/abs/1603.09246) by Mehdi Noroozi [GitHub](https://github.com/MehdiNoroozi/JigsawPuzzleSolver)
 
-**Still not fully tested**
+**Partially tested**
+**Performances Coming Soon**
 
 # Dependencies
 - Tested with Python 2.7
