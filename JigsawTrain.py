@@ -77,21 +77,19 @@ def main():
             net.load(args.model)
 
     criterion = nn.CrossEntropyLoss()
-    #optimizer = torch.optim.Adam(net.parameters(), lr=params['lr'])
-    optimizer = torch.optim.SGD(net.parameters(),lr=args.lr)
-
+    optimizer = torch.optim.SGD(net.parameters(),lr=args.lr,momentum=0.9,weight_decay = 5e-4)
+    
     logger = Logger(args.checkpoint+'/train')
     logger_test = Logger(args.checkpoint+'/test')
 
     ############## TRAINING ###############
-    print('Start training: lr %f, batch size %d, classes %d'%(
-                args.lr,args.batch,classes))
+    print('Start training: lr %f, batch size %d, classes %d'%(args.lr,args.batch,classes))
     print('Checkpoint: '+args.checkpoint)
 
     # Train the Model
     steps = args.iter_start
     for epoch in range(int(args.iter_start/iter_per_epoch),args.epochs):
-        lr = adjust_learning_rate(optimizer, epoch, init_lr=args.lr, step=30, decay=0.1)
+        lr = adjust_learning_rate(optimizer, epoch, init_lr=args.lr, step=20, decay=0.1)
 
         accuracy = []
         for i, (images, labels, _) in enumerate(train_loader):
