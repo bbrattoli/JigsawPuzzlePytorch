@@ -25,7 +25,7 @@ from TrainingUtils import adjust_learning_rate, compute_accuracy
 parser = argparse.ArgumentParser(description='Train JigsawPuzzleSolver on Imagenet')
 parser.add_argument('data', type=str, help='Path to Imagenet folder')
 parser.add_argument('--model', default=None, type=str, help='Path to pretrained model')
-parser.add_argument('--classes', default=10, type=int, help='Number of permutation to use')
+parser.add_argument('--classes', default=1000, type=int, help='Number of permutation to use')
 parser.add_argument('--gpu', default=None, type=int, help='gpu id')
 parser.add_argument('--epochs', default=70, type=int, help='number of total epochs for training')
 parser.add_argument('--iter_start', default=0, type=int, help='Starting iteration count')
@@ -33,19 +33,6 @@ parser.add_argument('--batch', default=256, type=int, help='batch size')
 parser.add_argument('--checkpoint', default='checkpoints/', type=str, help='checkpoint folder')
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate for SGD optimizer')
 args = parser.parse_args()
-
-classes, gpu = 2000, 3
-#classes, gpu = 10000, 4
-args = parser.parse_args([
-   "/net/hci-storage01/userfolders/etikhonc/data/",
-   '--classes',str(classes),'--model','JpsTraininig/jigsaw_original.pth.tar',
-   '--batch','256','--checkpoint','checkpoints/Jigsaw++/perm%d_lr0.1_LRN/'%(classes),
-   '--gpu',str(gpu)
-])
-
-# python JigsawTrain.py "/net/hci-storage01/userfolders/etikhonc/data/ILSVRC2012_img_train" \
-#    --classes=1000 --checkpoint="checkpoints/BatchNorm/perm1000_lr1_normpatch/" --gpu=2 --lr=0.1 \
-#    --model="checkpoints/perm1000_LRN_lr1/jps_012.pth.tar"
 
 def main():
     if args.gpu is not None:
