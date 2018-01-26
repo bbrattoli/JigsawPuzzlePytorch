@@ -1,5 +1,5 @@
 # JigsawPuzzlePytorch
-Pytorch implementation of the paper ["Unsupervised Learning of Visual Representations by Solving Jigsaw Puzzles"](https://arxiv.org/abs/1603.09246)
+Pytorch implementation of the paper ["Unsupervised Learning of Visual Representations by Solving Jigsaw Puzzles"](https://arxiv.org/abs/1603.09246) [Caffe Implementation](https://github.com/MehdiNoroozi/JigsawPuzzleSolver) by Mehdi Noroozi
 
 **Still not fully tested**
 
@@ -12,7 +12,7 @@ Pytorch implementation of the paper ["Unsupervised Learning of Visual Representa
 # Train the JiggsawPuzzleSolver
 Fill the path information in **_run_jigsaw_training.sh_** and run
 ```
-run_jigsaw_training.sh [GPU_ID]
+./run_jigsaw_training.sh [GPU_ID]
 ```
 or call the python script
 ```
