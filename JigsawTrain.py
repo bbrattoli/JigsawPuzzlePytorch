@@ -19,8 +19,6 @@ from torch.autograd import Variable
 
 sys.path.append('Dataset')
 from JigsawNetwork import Network
-from JigsawImageLoader import DataLoader
-#from ImageDataLoader import DataLoader
 
 from TrainingUtils import adjust_learning_rate, compute_accuracy
 
@@ -35,7 +33,13 @@ parser.add_argument('--iter_start', default=0, type=int, help='Starting iteratio
 parser.add_argument('--batch', default=256, type=int, help='batch size')
 parser.add_argument('--checkpoint', default='checkpoints/', type=str, help='checkpoint folder')
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate for SGD optimizer')
+parser.add_argument('--dataloader', action='store_true',help='Use custom dataloader instead of PyTorch DataLoader')
 args = parser.parse_args()
+
+if args.dataloader:
+    from ImageDataLoader import DataLoader
+else:
+    from JigsawImageLoader import DataLoader
 
 def main():
     if args.gpu is not None:
@@ -45,20 +49,23 @@ def main():
     else:
         print('CPU mode')
     
-    ## DataLoader initialize ILSVRC2012_train_processed
-    #train_loader = DataLoader(args.data+'/ILSVRC2012_img_train', 
-                            #args.data+'/ilsvrc12_train.txt', batchsize=args.batch,
-                            #classes=args.classes, n_cores = 10)
-    #N = train_loader.N
+    print 'Process number: %d'%(os.getpid())
     
-    train_data = DataLoader(args.data+'/ILSVRC2012_img_train', 
-                            args.data+'/ilsvrc12_train.txt',
-                            classes=args.classes)
-    train_loader = torch.utils.data.DataLoader(dataset=train_data,
-                                            batch_size=args.batch,
-                                            shuffle=True,
-                                            num_workers=16)
-    N = train_data.N
+    ## DataLoader initialize ILSVRC2012_train_processed
+    if args.dataloader:
+        train_loader = DataLoader(args.data+'/ILSVRC2012_img_train', 
+                                args.data+'/ilsvrc12_train.txt', 
+                                batchsize=args.batch,classes=args.classes)
+        N = train_loader.N
+    else:
+        train_data = DataLoader(args.data+'/ILSVRC2012_img_train', 
+                                args.data+'/ilsvrc12_train.txt',
+                                classes=args.classes)
+        train_loader = torch.utils.data.DataLoader(dataset=train_data,
+                                                batch_size=args.batch,
+                                                shuffle=True,
+                                                num_workers=0)
+        N = train_data.N
     
     iter_per_epoch = N/args.batch
     print 'Images: %d'%(N)
