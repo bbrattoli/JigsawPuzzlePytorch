@@ -7,6 +7,7 @@ Created on Wed Sep 13 15:57:01 2017
 import torch
 import torch.nn as nn
 from torch import cat
+import torch.nn.init as init
 
 import sys
 sys.path.append('Utils')
@@ -50,6 +51,8 @@ class Network(nn.Module):
 
         self.classifier = nn.Sequential()
         self.classifier.add_module('fc8',nn.Linear(4096, classes))
+        
+        #self.apply(weights_init)
 
     def load(self,checkpoint):
         model_dict = self.state_dict()
@@ -61,7 +64,7 @@ class Network(nn.Module):
 
     def save(self,checkpoint):
         torch.save(self.state_dict(), checkpoint)
-
+    
     def forward(self, x):
         B,T,C,H,W = x.size()
         x = x.transpose(0,1)
@@ -78,3 +81,10 @@ class Network(nn.Module):
         x = self.classifier(x)
 
         return x
+
+
+def weights_init(model):
+    if type(model) in [nn.Conv2d,nn.Linear]:
+        nn.init.xavier_normal(model.weight.data)
+        nn.init.constant(model.bias.data, 0.1)
+    

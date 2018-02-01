@@ -2,10 +2,12 @@
 """
 Created on Thu Sep 14 12:16:31 2017
 
-@author: bbrattol
+@author: Biagio Brattoli
 """
 import os, sys, numpy as np
 import argparse
+from time import time
+from tqdm import tqdm
 
 import tensorflow # needs to call tensorflow before torch, otherwise crush
 sys.path.append('Utils')
@@ -15,8 +17,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 
-sys.path.append('JpsTraininig')
-from JigsawLoader  import DataLoader
+sys.path.append('Dataset')
 from JigsawNetwork import Network
 
 from TrainingUtils import adjust_learning_rate, compute_accuracy
@@ -32,7 +33,32 @@ parser.add_argument('--iter_start', default=0, type=int, help='Starting iteratio
 parser.add_argument('--batch', default=256, type=int, help='batch size')
 parser.add_argument('--checkpoint', default='checkpoints/', type=str, help='checkpoint folder')
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate for SGD optimizer')
+parser.add_argument('--processed', action='store_true', help='Use stored data produced by Dataset/produce_jigsaw_data.py')
 args = parser.parse_args()
+
+
+if args.processed:
+    from joblib import Parallel, delayed
+    from JigsawTilesLoader import DataLoader
+else:
+    from JigsawImageLoader import DataLoader
+
+
+#from JigsawMemoryLoader import DataLoader
+#from JigsawLmdbTilesLoader import DataLoader
+
+def dataset_info(txt_labels):
+    with open(txt_labels,'r') as f:
+        images_list = f.readlines()
+    
+    file_names = []
+    labels     = []
+    for row in images_list:
+        row = row.split(' ')
+        file_names.append(row[0])
+        labels.append(int(row[1]))
+    
+    return file_names
 
 def main():
     if args.gpu is not None:
@@ -41,37 +67,57 @@ def main():
         os.environ["CUDA_VISIBLE_DEVICES"]=str(args.gpu)
     else:
         print('CPU mode')
-
-    # DataLoader initialize
-    train_data = DataLoader(args.data+'/ILSVRC2012_img_train',
-                            is_train=True,classes=args.classes)
-    train_loader = torch.utils.data.DataLoader(dataset=train_data,
-                                               batch_size=args.batch,
-                                               shuffle=True,
-                                               num_workers=4)
-
-    val_data = DataLoader(args.data+'/ILSVRC2012_img_val',
-                          is_train=False,classes=args.classes)
-    val_loader = torch.utils.data.DataLoader(dataset=val_data,
-                                               batch_size=args.batch,
-                                               shuffle=True,
-                                               num_workers=4)
-
-    N = len(train_data.names)
-    iter_per_epoch = N/args.batch
     
     # Network initialize
-    classes = len(train_data.permutations)
-    net = Network(classes)
+    net = Network(args.classes)
     if args.gpu is not None:
         net.cuda()
+    
+    ## DataLoader initialize ILSVRC2012_train_processed
+    if args.processed:
+        filenames = dataset_info(args.data+'/ilsvrc12_train.txt')
+        names = [args.data+'ILSVRC2012_img_train_jigsaw/'+n[:-5]+'.npy' for n in filenames]
+        with Parallel(n_jobs=16) as parallel:
+            tiles = parallel(delayed(np.load)(n) for n in tqdm(names))
+        
+        train_data = DataLoader(tiles,classes=args.classes)
+        train_loader = torch.utils.data.DataLoader(dataset=train_data,
+                                                batch_size=args.batch,
+                                                shuffle=True,
+                                                num_workers=0)
+    else:
+        train_data = DataLoader(args.data+'/ILSVRC2012_img_train', args.data+'/ilsvrc12_train.txt',
+                            is_train=True,classes=args.classes)
+        train_loader = torch.utils.data.DataLoader(dataset=train_data,
+                                               batch_size=args.batch,
+                                               shuffle=True,
+                                               num_workers=0)
+    
+    #t = time()
+    #val_data = DataLoader(args.data+'/ILSVRC2012_img_val', args.data+'/ilsvrc12_val.txt',
+                          #is_train=False,classes=args.classes)
+    #val_loader = torch.utils.data.DataLoader(dataset=val_data,
+                                               #batch_size=args.batch,
+                                               #shuffle=True,
+                                               #num_workers=0)
+    #print 'Validation loader done in %.3fsec'%(time()-t)
 
+    N = train_data.N
+    iter_per_epoch = N/args.batch
+    print 'Images: %d'%(N)
+ 
     if os.path.exists(args.checkpoint):
         files = [f for f in os.listdir(args.checkpoint) if 'pth' in f]
-        ckp = files[-1]
-        net.load_state_dict(torch.load(args.checkpoint+ckp))
-        args.iter_start = int(ckp.split(".")[-3].split("_")[-1])
-        print 'Starting from: ',ckp
+        if len(files)>0:
+            files.sort()
+            #print files
+            ckp = files[-1]
+            net.load_state_dict(torch.load(args.checkpoint+ckp))
+            args.iter_start = int(ckp.split(".")[-3].split("_")[-1])
+            print 'Starting from: ',ckp
+        else:
+            if args.model is not None:
+                net.load(args.model)
     else:
         if args.model is not None:
             net.load(args.model)
@@ -83,16 +129,25 @@ def main():
     logger_test = Logger(args.checkpoint+'/test')
 
     ############## TRAINING ###############
-    print('Start training: lr %f, batch size %d, classes %d'%(args.lr,args.batch,classes))
+    print('Start training: lr %f, batch size %d, classes %d'%(args.lr,args.batch,args.classes))
     print('Checkpoint: '+args.checkpoint)
-
+    
     # Train the Model
+    batch_time, net_time = [], []
     steps = args.iter_start
     for epoch in range(int(args.iter_start/iter_per_epoch),args.epochs):
         lr = adjust_learning_rate(optimizer, epoch, init_lr=args.lr, step=20, decay=0.1)
 
-        accuracy = []
-        for i, (images, labels, _) in enumerate(train_loader):
+        #for i, (images, labels, _) in enumerate(train_loader):
+        it = iter(train_loader)
+        for i in range(int((float(N)/args.batch))-1):
+            t = time()
+            images, labels, _ = it.next()
+            batch_time.append(time()-t)
+            if len(batch_time)>100:
+                del batch_time[0]
+            
+            
             images = Variable(images)
             labels = Variable(labels)
             if args.gpu is not None:
@@ -101,20 +156,25 @@ def main():
 
             # Forward + Backward + Optimize
             optimizer.zero_grad()
+            t = time()
             outputs = net(images)
-
+            net_time.append(time()-t)
+            if len(net_time)>100:
+                del net_time[0]
+            
             prec1, prec5 = compute_accuracy(outputs.cpu().data, labels.cpu().data, topk=(1, 5))
             acc = prec1[0]
-            accuracy.append(acc)
 
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
             loss = float(loss.cpu().data.numpy())
 
-            if steps%100==0:
-                print ('[%d/%d] %d) LR %.5f, Loss: %.3f, Accuracy %.1f%%' %(
-                            epoch+1, args.epochs, steps, lr, loss,acc))
+            if steps%1==0:
+                print ('[%2d/%2d] %5d) [batch load % 2.2fsec, net %1.2fsec], LR %.5f, Loss: % 1.3f, Accuracy % 2.1f%%' %(
+                            epoch+1, args.epochs, steps, 
+                            np.mean(batch_time), np.mean(net_time),
+                            lr, loss,acc))
 
             if steps%20==0:
                 logger.scalar_summary('accuracy', acc, steps)
