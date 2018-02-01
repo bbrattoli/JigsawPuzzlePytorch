@@ -19,6 +19,8 @@ from torch.autograd import Variable
 
 sys.path.append('Dataset')
 from JigsawNetwork import Network
+from JigsawImageLoader import DataLoader
+#from ImageDataLoader import DataLoader
 
 from TrainingUtils import adjust_learning_rate, compute_accuracy
 
@@ -33,32 +35,7 @@ parser.add_argument('--iter_start', default=0, type=int, help='Starting iteratio
 parser.add_argument('--batch', default=256, type=int, help='batch size')
 parser.add_argument('--checkpoint', default='checkpoints/', type=str, help='checkpoint folder')
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate for SGD optimizer')
-parser.add_argument('--processed', action='store_true', help='Use stored data produced by Dataset/produce_jigsaw_data.py')
 args = parser.parse_args()
-
-
-if args.processed:
-    from joblib import Parallel, delayed
-    from JigsawTilesLoader import DataLoader
-else:
-    from JigsawImageLoader import DataLoader
-
-
-#from JigsawMemoryLoader import DataLoader
-#from JigsawLmdbTilesLoader import DataLoader
-
-def dataset_info(txt_labels):
-    with open(txt_labels,'r') as f:
-        images_list = f.readlines()
-    
-    file_names = []
-    labels     = []
-    for row in images_list:
-        row = row.split(' ')
-        file_names.append(row[0])
-        labels.append(int(row[1]))
-    
-    return file_names
 
 def main():
     if args.gpu is not None:
@@ -68,44 +45,29 @@ def main():
     else:
         print('CPU mode')
     
+    ## DataLoader initialize ILSVRC2012_train_processed
+    #train_loader = DataLoader(args.data+'/ILSVRC2012_img_train', 
+                            #args.data+'/ilsvrc12_train.txt', batchsize=args.batch,
+                            #classes=args.classes, n_cores = 10)
+    #N = train_loader.N
+    
+    train_data = DataLoader(args.data+'/ILSVRC2012_img_train', 
+                            args.data+'/ilsvrc12_train.txt',
+                            classes=args.classes)
+    train_loader = torch.utils.data.DataLoader(dataset=train_data,
+                                            batch_size=args.batch,
+                                            shuffle=True,
+                                            num_workers=16)
+    N = train_data.N
+    
+    iter_per_epoch = N/args.batch
+    print 'Images: %d'%(N)
+    
     # Network initialize
     net = Network(args.classes)
     if args.gpu is not None:
         net.cuda()
     
-    ## DataLoader initialize ILSVRC2012_train_processed
-    if args.processed:
-        filenames = dataset_info(args.data+'/ilsvrc12_train.txt')
-        names = [args.data+'ILSVRC2012_img_train_jigsaw/'+n[:-5]+'.npy' for n in filenames]
-        with Parallel(n_jobs=16) as parallel:
-            tiles = parallel(delayed(np.load)(n) for n in tqdm(names))
-        
-        train_data = DataLoader(tiles,classes=args.classes)
-        train_loader = torch.utils.data.DataLoader(dataset=train_data,
-                                                batch_size=args.batch,
-                                                shuffle=True,
-                                                num_workers=0)
-    else:
-        train_data = DataLoader(args.data+'/ILSVRC2012_img_train', args.data+'/ilsvrc12_train.txt',
-                            is_train=True,classes=args.classes)
-        train_loader = torch.utils.data.DataLoader(dataset=train_data,
-                                               batch_size=args.batch,
-                                               shuffle=True,
-                                               num_workers=0)
-    
-    #t = time()
-    #val_data = DataLoader(args.data+'/ILSVRC2012_img_val', args.data+'/ilsvrc12_val.txt',
-                          #is_train=False,classes=args.classes)
-    #val_loader = torch.utils.data.DataLoader(dataset=val_data,
-                                               #batch_size=args.batch,
-                                               #shuffle=True,
-                                               #num_workers=0)
-    #print 'Validation loader done in %.3fsec'%(time()-t)
-
-    N = train_data.N
-    iter_per_epoch = N/args.batch
-    print 'Images: %d'%(N)
- 
     if os.path.exists(args.checkpoint):
         files = [f for f in os.listdir(args.checkpoint) if 'pth' in f]
         if len(files)>0:

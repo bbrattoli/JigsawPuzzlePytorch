@@ -14,8 +14,7 @@ Pytorch implementation of the paper ["Unsupervised Learning of Visual Representa
 ## Setup Loader
 Two DataLoader are provided:
 - **_Dataset/JigsawImageLoader.py_**: per each iteration it loads data in image format (jpg,png ,...)
-- **_Dataset/JigsawTilesLoader.py_**: load all pre-processed images into memory. Preprocessed data need to be produced using **_Dataset/produce_jigsaw_data.py_**
-The default loader is **_JigsawImageLoader.py_**. **_JigsawTilesLoader.py_** can be used with the flage **_--processed_**
+The default loader is **_JigsawImageLoader.py_**.
 
 To start training, the DataLoader needs the path to the Imagenet folder containing **_ILSVRC2012_img_train_**. 
 Fill the path information in **_run_jigsaw_training.sh_**

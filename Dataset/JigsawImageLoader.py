@@ -13,8 +13,7 @@ import torch
 from PIL import Image
 
 class DataLoader(data.Dataset):
-    def __init__(self,data_path,txt_list,classes=10,is_train=True):
-        self.is_train = is_train
+    def __init__(self,data_path,txt_list,classes=1000):
         self.data_path = data_path
         self.names, _ = self.__dataset_info(txt_list)
         self.N = len(self.names)
