@@ -13,13 +13,18 @@ Pytorch implementation of the paper ["Unsupervised Learning of Visual Representa
 # Train the JiggsawPuzzleSolver
 ## Setup Loader
 Two DataLoader are provided:
-- **_Dataset/JigsawImageLoader.py_**: per each iteration it loads data in image format (jpg,png ,...)
-The default loader is **_JigsawImageLoader.py_**.
+- ImageLoader: per each iteration it loads data in image format (jpg,png ,...)
+-- **_Dataset/JigsawImageLoader.py_** uses PyTorch DataLoader and iterator
+-- **_Dataset/ImageDataLoader.py_** custom implementation.
 
-To start training, the DataLoader needs the path to the Imagenet folder containing **_ILSVRC2012_img_train_**. 
-Fill the path information in **_run_jigsaw_training.sh_**
+The default loader is **_JigsawImageLoader.py_**. **_ImageDataLoader.py_** is slightly faster when using single core.
+
+The images can be preprocessed using **_produce_small_data.py_** which resize the image to 256, keeping the aspect ratio, and crops a patch of size 255x255 in the center.
 
 ## Run Training
+Fill the path information in **_run_jigsaw_training.sh_**. 
+IMAGENET_FOLD needs to point to the folder containing **_ILSVRC2012_img_train_**.
+
 ```
 ./run_jigsaw_training.sh [GPU_ID]
 ```
@@ -27,14 +32,15 @@ or call the python script
 ```
 python JigsawTrain.py [path_to_imagenet] --checkpoint [path_checkpoints_and_logs] --gpu [GPU_ID] --batch [batch_size]
 ```
-By default the network uses 1000 permutations with maximum hamming distance selected using **_Utils/select_permutations.py_**
+By default the network uses 1000 permutations with maximum hamming distance selected using **_select_permutations.py_**.
+
 To change the file name loaded for the permutations, open the file **_JigsawLoader.py_** and change the permutation file in the method **_retrive_permutations_**
 
 # Details:
 - The input of the network should be 64x64, but I need to resize to 75x75,
   otherwise the output of conv5 is 2x2 instead of 3x3 like the official architecture
-- Jigsaw trained using the approach of the paper: SGD, LRN layers
-- Implemented *shortcuts*: teil spatial random jittering, normalize each patch indipendently, color jitter
+- Jigsaw trained using the approach of the paper: SGD, LRN layers, 70 epochs
+- Implemented *shortcuts*: spatial jittering, normalize each patch indipendently, color jittering, 30% black&white image
 - The LRN layer crushes with a PyTorch version older than 0.3
 
 # ToDo
