@@ -14,27 +14,27 @@ Pytorch implementation of the paper ["Unsupervised Learning of Visual Representa
 ## Setup Loader
 Two DataLoader are provided:
 - ImageLoader: per each iteration it loads data in image format (jpg,png ,...)
--- *_Dataset/JigsawImageLoader.py_* uses PyTorch DataLoader and iterator
--- *_Dataset/ImageDataLoader.py_* custom implementation.
+    - *Dataset/JigsawImageLoader.py* uses PyTorch DataLoader and iterator
+    - *Dataset/ImageDataLoader.py* custom implementation.
 
-The default loader is *_JigsawImageLoader.py_*. *_ImageDataLoader.py_* is slightly faster when using single core.
+The default loader is *JigsawImageLoader.py*. *ImageDataLoader.py* is slightly faster when using single core.
 
 The images can be preprocessed using *_produce_small_data.py_* which resize the image to 256, keeping the aspect ratio, and crops a patch of size 255x255 in the center.
 
 ## Run Training
-Fill the path information in *_run_jigsaw_training.sh_*. 
-IMAGENET_FOLD needs to point to the folder containing *_ILSVRC2012_img_train_*.
+Fill the path information in *run_jigsaw_training.sh*. 
+IMAGENET_FOLD needs to point to the folder containing *ILSVRC2012_img_train*.
 
 ```
 ./run_jigsaw_training.sh [GPU_ID]
 ```
 or call the python script
 ```
-python JigsawTrain.py [path_to_imagenet] --checkpoint [path_checkpoints_and_logs] --gpu [GPU_ID] --batch [batch_size]
+python JigsawTrain.py [*path_to_imagenet*] --checkpoint [*path_checkpoints_and_logs*] --gpu [*GPU_ID*] --batch [*batch_size*]
 ```
-By default the network uses 1000 permutations with maximum hamming distance selected using *_select_permutations.py_*.
+By default the network uses 1000 permutations with maximum hamming distance selected using *select_permutations.py*.
 
-To change the file name loaded for the permutations, open the file *_JigsawLoader.py_* and change the permutation file in the method *_retrive_permutations_*
+To change the file name loaded for the permutations, open the file *JigsawLoader.py* and change the permutation file in the method *retrive_permutations*
 
 # Details:
 - The input of the network should be 64x64, but I need to resize to 75x75,
