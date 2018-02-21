@@ -30,7 +30,7 @@ class DataLoader(data.Dataset):
                     #transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                          #std =[0.229, 0.224, 0.225])
                                          ])
-
+        
     def __getitem__(self, index):
         framename = self.data_path+'/'+self.names[index]
         
