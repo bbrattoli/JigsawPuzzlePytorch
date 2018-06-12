@@ -57,10 +57,10 @@ class Network(nn.Module):
     def load(self,checkpoint):
         model_dict = self.state_dict()
         pretrained_dict = torch.load(checkpoint)
-        pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict and 'fc8' not in k}
+        pretrained_dict = {k: v for k, v in list(pretrained_dict.items()) if k in model_dict and 'fc8' not in k}
         model_dict.update(pretrained_dict)
         self.load_state_dict(model_dict)
-        print [k for k, v in pretrained_dict.items()]
+        print([k for k, v in list(pretrained_dict.items())])
 
     def save(self,checkpoint):
         torch.save(self.state_dict(), checkpoint)

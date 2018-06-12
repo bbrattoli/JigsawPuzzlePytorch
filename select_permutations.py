@@ -21,7 +21,7 @@ args = parser.parse_args()
 if __name__ == "__main__":
     outname = 'permutations/permutations_hamming_%s_%d'%(args.selection,args.classes)
     
-    P_hat = np.array(list(itertools.permutations(range(9), 9)))
+    P_hat = np.array(list(itertools.permutations(list(range(9)), 9)))
     n = P_hat.shape[0]
     
     for i in trange(args.classes):
@@ -45,4 +45,4 @@ if __name__ == "__main__":
             np.save(outname,P)
     
     np.save(outname,P)
-    print 'file created --> '+outname
+    print('file created --> '+outname)
