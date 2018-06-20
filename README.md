@@ -10,7 +10,7 @@ Pytorch implementation of the paper ["Unsupervised Learning of Visual Representa
 - [Tensorflow](https://www.tensorflow.org/) is used for logging. 
   Remove the Logger all scripts if tensorflow is missing
 
-# Train the JiggsawPuzzleSolver
+# Train the JigsawPuzzleSolver
 ## Setup Loader
 Two DataLoader are provided:
 - ImageLoader: per each iteration it loads data in image format (jpg,png ,...)

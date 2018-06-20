@@ -27,7 +27,7 @@ parser = argparse.ArgumentParser(description='Train JigsawPuzzleSolver on Imagen
 parser.add_argument('data', type=str, help='Path to Imagenet folder')
 parser.add_argument('--model', default=None, type=str, help='Path to pretrained model')
 parser.add_argument('--classes', default=1000, type=int, help='Number of permutation to use')
-parser.add_argument('--gpu', default=None, type=int, help='gpu id')
+parser.add_argument('--gpu', default=0, type=int, help='gpu id')
 parser.add_argument('--epochs', default=70, type=int, help='number of total epochs for training')
 parser.add_argument('--iter_start', default=0, type=int, help='Starting iteration count')
 parser.add_argument('--batch', default=256, type=int, help='batch size')
@@ -44,13 +44,13 @@ from JigsawImageLoader import DataLoader
 
 def main():
     if args.gpu is not None:
-        print('Using GPU %d'%args.gpu)
+        print(('Using GPU %d'%args.gpu))
         os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
         os.environ["CUDA_VISIBLE_DEVICES"]=str(args.gpu)
     else:
         print('CPU mode')
     
-    print 'Process number: %d'%(os.getpid())
+    print('Process number: %d'%(os.getpid()))
     
     ## DataLoader initialize ILSVRC2012_train_processed
     trainpath = args.data+'/ILSVRC2012_img_train'
@@ -75,7 +75,7 @@ def main():
     N = train_data.N
     
     iter_per_epoch = train_data.N/args.batch
-    print 'Images: train %d, validation %d'%(train_data.N,val_data.N)
+    print('Images: train %d, validation %d'%(train_data.N,val_data.N))
     
     # Network initialize
     net = Network(args.classes)
@@ -91,7 +91,7 @@ def main():
             ckp = files[-1]
             net.load_state_dict(torch.load(args.checkpoint+'/'+ckp))
             args.iter_start = int(ckp.split(".")[-3].split("_")[-1])
-            print 'Starting from: ',ckp
+            print('Starting from: ',ckp)
         else:
             if args.model is not None:
                 net.load(args.model)
@@ -111,8 +111,8 @@ def main():
         return
     
     ############## TRAINING ###############
-    print('Start training: lr %f, batch size %d, classes %d'%(args.lr,args.batch,args.classes))
-    print('Checkpoint: '+args.checkpoint)
+    print(('Start training: lr %f, batch size %d, classes %d'%(args.lr,args.batch,args.classes)))
+    print(('Checkpoint: '+args.checkpoint))
     
     # Train the Model
     batch_time, net_time = [], []
@@ -151,10 +151,10 @@ def main():
             loss = float(loss.cpu().data.numpy())
 
             if steps%20==0:
-                print ('[%2d/%2d] %5d) [batch load % 2.3fsec, net %1.2fsec], LR %.5f, Loss: % 1.3f, Accuracy % 2.2f%%' %(
+                print(('[%2d/%2d] %5d) [batch load % 2.3fsec, net %1.2fsec], LR %.5f, Loss: % 1.3f, Accuracy % 2.2f%%' %(
                             epoch+1, args.epochs, steps, 
                             np.mean(batch_time), np.mean(net_time),
-                            lr, loss,acc))
+                            lr, loss,acc)))
 
             if steps%20==0:
                 logger.scalar_summary('accuracy', acc, steps)
@@ -174,7 +174,7 @@ def main():
             if steps%1000==0:
                 filename = '%s/jps_%03i_%06d.pth.tar'%(args.checkpoint,epoch,steps)
                 net.save(filename)
-                print 'Saved: '+args.checkpoint
+                print('Saved: '+args.checkpoint)
             
             end = time()
 
@@ -183,7 +183,7 @@ def main():
             break
 
 def test(net,criterion,logger,val_loader,steps):
-    print 'Evaluating network.......'
+    print('Evaluating network.......')
     accuracy = []
     net.eval()
     for i, (images, labels, _) in enumerate(val_loader):
@@ -200,7 +200,7 @@ def test(net,criterion,logger,val_loader,steps):
 
     if logger is not None:
         logger.scalar_summary('accuracy', np.mean(accuracy), steps)
-    print 'TESTING: %d), Accuracy %.2f%%' %(steps,np.mean(accuracy))
+    print('TESTING: %d), Accuracy %.2f%%' %(steps,np.mean(accuracy)))
     net.train()
 
 if __name__ == "__main__":

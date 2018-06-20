@@ -18,7 +18,7 @@ args = parser.parse_args()
 def save_net(fname, net):
     import h5py
     h5f = h5py.File(fname, mode='w')
-    for k, v in net.state_dict().items():
+    for k, v in list(net.state_dict().items()):
         h5f.create_dataset(k, data=v.cpu().numpy())
 
 net = Network(args.classes,groups=2)
